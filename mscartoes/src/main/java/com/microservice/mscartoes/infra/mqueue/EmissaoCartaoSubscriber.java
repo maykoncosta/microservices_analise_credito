@@ -8,12 +8,14 @@ import com.microservice.mscartoes.domain.DadosSolicitacaoEmissaoCartao;
 import com.microservice.mscartoes.infra.repository.CartaoRepository;
 import com.microservice.mscartoes.infra.repository.ClienteCartaoRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
+@Slf4j
 public class EmissaoCartaoSubscriber {
 
     private final CartaoRepository cartaoRepository;
@@ -22,6 +24,7 @@ public class EmissaoCartaoSubscriber {
     @RabbitListener(queues = "${mq.queues.emissao-cartoes}")
     public void receberSolicitacaoEmissaoCartao(@Payload String payload){
         try {
+            log.info("Inicio - Receber dados para emitir cartao");
             var mapper = new ObjectMapper();
             var dadosEmissao = mapper.readValue(payload, DadosSolicitacaoEmissaoCartao.class);
             Cartao cartao = cartaoRepository.findById(dadosEmissao.getIdCartao()).orElseThrow();
@@ -31,8 +34,9 @@ public class EmissaoCartaoSubscriber {
             clienteCartao.setLimite(dadosEmissao.getLimiteLiberado());
 
             clienteCartaoRepository.save(clienteCartao);
+            log.info("Fim - Cartao Emitido");
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("Erro ao receber solicitacao de emissao do cartao: " + e.getMessage());
         }
 
     }

@@ -9,6 +9,7 @@ import com.microservice.msavaliadorcredito.infra.clients.ClienteResourceClient;
 import com.microservice.msavaliadorcredito.infra.mqueue.SolicitacaoEmissaoCartaoPublisher;
 import feign.FeignException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -20,6 +21,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class AvaliadorCreditoService {
 
     private final ClienteResourceClient clientesClient;
@@ -29,6 +31,7 @@ public class AvaliadorCreditoService {
 
     public SituacaoCliente obterSituacaoCliente(String cpf){
         try{
+            log.info("Obtendo situacao do cliente");
             ResponseEntity<DadosCliente> dadosCliente = clientesClient.dadosCliente(cpf);
             ResponseEntity<List<CartaoCliente>> cartoesByCliente = cartoesClient.getCartoesByCliente(cpf);
 
@@ -40,7 +43,7 @@ public class AvaliadorCreditoService {
 
         }catch (FeignException.FeignClientException e){
             int status = e.status();
-
+            log.error("Error ao obter a situacao do cliente");
             if(HttpStatus.NOT_FOUND.value() == status){
                 throw new DadosClientesNotFoundException();
             }
@@ -50,6 +53,7 @@ public class AvaliadorCreditoService {
 
     public RetornoAvaliacaoCliente realizarAvaliacao(String cpf, Long renda){
         try{
+            log.info("Realizar Avaliacao por renda");
             ResponseEntity<DadosCliente> dadosCliente = clientesClient.dadosCliente(cpf);
             ResponseEntity<List<Cartao>> castoesResponse = cartoesClient.getCartoesRendaAteh(renda);
             List<Cartao> cartoes = castoesResponse.getBody();
@@ -86,6 +90,7 @@ public class AvaliadorCreditoService {
 
     public ProtocoloSolicitacaoCartao solicitarEmissaoCartao(DadosSolicitacaoEmissaoCartao dados){
         try{
+            log.info("Solicitando Emissao do Cartao");
             emissaoCartaoPublisher.solicitarCartao(dados);
             var protocolo = UUID.randomUUID().toString();
             return new ProtocoloSolicitacaoCartao(protocolo);
