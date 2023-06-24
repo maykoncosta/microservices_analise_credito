@@ -1,0 +1,76 @@
+services:
+  cursoms-rabbitmq:
+    image: rabbitmq:3.12-management
+    container_name: cursoms-rabbitmq
+    volumes:
+      - /var/lib/rabbitmq
+    restart: always
+    networks:
+      - ms-network
+    ports:
+      - 5672:5672
+      - 15672:15672
+  cursoms-eureka:
+    build: "./eurekaserver/eurekaserver"
+    container_name: cursoms-eureka
+    restart: always
+    ports:
+      - 8761:8761
+    networks:
+      - ms-network
+    environment:
+      - EUREKA_SERVER=cursoms-eureka
+      - SPRING_PROFILES_ACTIVE=production
+  cursoms-avaliador-credito:
+    build: "./msavaliadorcredito"
+    container_name: cursoms-avaliador-credito
+    restart: always
+    networks:
+      - ms-network
+    environment:
+      - RABBITMQ_SERVER=cursoms-rabbitmq
+      - EUREKA_SERVER=cursoms-eureka
+      - SPRING_PROFILES_ACTIVE=production
+    depends_on:
+      - cursoms-eureka
+  cursoms-cartoes:
+    build: "./mscartoes"
+    container_name: cursoms-cartoes
+    restart: always
+    networks:
+      - ms-network
+    environment:
+      - RABBITMQ_SERVER=cursoms-rabbitmq
+      - EUREKA_SERVER=cursoms-eureka
+      - SPRING_PROFILES_ACTIVE=production
+    depends_on:
+      - cursoms-eureka
+  cursoms-clientes:
+    build: "./msclientes"
+    container_name: cursoms-clientes
+    restart: always
+    networks:
+      - ms-network
+    environment:
+      - EUREKA_SERVER=cursoms-eureka
+      - SPRING_PROFILES_ACTIVE=production
+    depends_on:
+      - cursoms-eureka
+  cursoms-gateway:
+    build: "./mscloudgateway"
+    container_name: cursoms-gateway
+    restart: always
+    ports:
+      - 8080:8080
+    networks:
+      - ms-network
+    environment:
+      - EUREKA_SERVER=cursoms-eureka
+      - SPRING_PROFILES_ACTIVE=production
+    depends_on:
+      - cursoms-clientes
+      - cursoms-cartoes
+      - cursoms-avaliador-credito
+networks:
+    ms-network:
+        driver: bridge

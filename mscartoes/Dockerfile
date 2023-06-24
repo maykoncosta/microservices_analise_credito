@@ -8,4 +8,4 @@ WORKDIR /app
 COPY --from=build ./app/target/*.jar app.jar
 ARG RABBITMQ_SERVER=rabbitmq-host
 ARG EUREKA_SERVER=localhost
-ENTRYPOINT java Dspring.ap.profiles.active=production -jar app.jar
+ENTRYPOINT java -Dspring.ap.profiles.active=production -jar app.jar

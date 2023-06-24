@@ -7,4 +7,4 @@ FROM openjdk:11
 WORKDIR /app
 COPY --from=build ./app/target/*.jar app.jar
 ARG EUREKA_SERVER=localhost
-ENTRYPOINT java Dspring.profiles.active=production -jar app.jar
+ENTRYPOINT java -Dspring.profiles.active=production -jar app.jar
